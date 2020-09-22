@@ -16,3 +16,8 @@
 
 ## Java基础-详情
 ### <span id=”dataType“>数据类型</span>
+#### [8种基础数据类型](./basis/datatype/basicdatatype/EightKindsBasicDataType.md)
+#### 8种包装数据类型
++ [分类](./basis/datatype/basicdatatype/EightKindsPackageDataType.md)
++ [缓冲池](./basis/datatype/basicdatatype/BufferPool.md)
+
