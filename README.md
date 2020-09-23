@@ -21,3 +21,5 @@
 + [分类](./basis/datatype/basicdatatype/EightKindsPackageDataType.md)
 + [缓冲池](./basis/datatype/basicdatatype/BufferPool.md)
 
+#### [String相关]
+

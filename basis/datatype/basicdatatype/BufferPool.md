@@ -58,10 +58,24 @@ f == h : true
 f1 == h1 : true
 ```
 
-可以看到:
-https://blog.csdn.net/stdio_54456153/article/details/98783049
+可以看到: Integer 在范围内 -128~127内是有缓存池的。当然如果是 new Integer(127) 这样不会走缓存池，反而会新建对象，所以指针地址并不相同。Integer.valueOf(int) 会在缓存池里取，多次调用会指向一个对象（此处的对象指int 127这个对象）。
 
-https://blog.csdn.net/QYHuiiQ/article/details/80148835
+# 扩展
+### int 和 Integer 的存储位置，以及此处对比的几个true的原因?
+int 没有引用的概念， 基础数据类型都是直接存储在内存中的内存**栈**上的，数据本身的值就是存储在栈空间里面的。
+Integer是基础数据的包装类型，属于对象类，继承自Object类(此处继承是隐式的继承)，都是按照Java里面存储对象的内存模型来存储数据的。
+存储对象的内存模型:分为两部分，引用、和数据本身。引用存储在**堆**内存中，（堆中存储方法区，局部变量等刷新缓慢，失去引用时不消失，需要垃圾回收器处理）堆内数据的地址存储在有序的内存**栈**上。
+
+## 继续扩展
+```
+Integer a = new Integer(128);
+int b = 128;
+// 输出true
+System.out.println(a == b);
+```
+Integer 和 int 对比的时候 Integer会自动拆箱(并无核心资料说明，测试对比得到答案) 
+装箱调用的是  Integer.valueOf();
+拆箱调用的是  intValue() return int;
 
 ## 哪些包具有缓冲池类型?
 + Byte
