@@ -1,6 +1,14 @@
 # String
 
-## 改变时
+## 目录
+## 改变
++ JDK8: char[]
++ JDK9: byte[]
+## String为什么被声明为final(声明为final的好处)
+TODO 写到这里了
+## 什么是StringPool(StringTable) 
+
+## 详情解释:
 ### 在JDK8中String使用char数组存储数据
 char占16位既2字节, 因为JAVA内部使用UTF-16。
 ```
@@ -14,7 +22,89 @@ JDK6中的可选虚拟机参数:
 ```
 当此选项启用时，字符串将以 byte[] 的形式存储，代替原来的 char[]，可以节省一些内存(多出来的那一个字节)。然而，此功能最终在 JDK7 中被移除，主要原因在于它将带来一些无法预料的性能问题。
 
-https://reionchan.github.io/2017/09/25/java-9-compact-string/#compressed-string---java-6
+
 
 ### 在JDK9中String使用byte数组存储字符串，并且同时使用coder来标识是使用了哪种编码
-String俨然已经成为java里最常用的类。
+Java 9 重新采纳字符串压缩这一概念:CompactString。（虽然JDK9、10被oracle官网不推荐了）我们就看JDK11的源码吧
+JDK9后 修改为了byte数组存储
+```
+private final byte[] value;  
+```
+String中引入了final修饰的成员变量 coder
+```
+private final byte coder;
+```
+coder 可以被赋值的常量
+```
+static final byte LATIN1 = 0;
+static final byte UTF16 = 1;
+```
+大多数操作都判断了coder，如我们熟悉的indexOf()
+```
+public int indexOf(int ch, int fromIndex) {
+        return isLatin1() ? StringLatin1.indexOf(value, ch, fromIndex)
+                          : StringUTF16.indexOf(value, ch, fromIndex);
+    }
+```
+如上代码，对应了不同的处理StringLatin1, StringUTF16
+虚拟机参数 CompactString 默认是被启用的，如果你需要关闭可以如下参数，注意：关闭后value依然是byte[]，只是编码格式没有了Latin1,默认为了UTF16
+```
++XX:-CompactStrings
+```
+
+计算字符串长度的变化
+```
+public int length() {
+    return value.length >> coder;
+}
+```
+备注: >> 右移运算符相当于 除以 2的N次方。
+eg:
+```
+int intTest = 20 >> 3;
+double doubleTest = 20 >> 3;
+// 2
+System.out.println(intTest);
+// 2.0 
+System.out.println(doubleTest);
+```
+
+
+
+
+## 扩展
+关于占用字节问题，测试环境为JDK8，JAVA默认使用unicode来表示字符（utf-8 16 32都是unicode），见如下代码
+```
+public static void main(String[] args) {
+    try {
+        String a = "我";
+        String b = "w";
+        // 3
+        System.out.println(a.getBytes("UTF-8").length);
+        // 1
+        System.out.println(b.getBytes("UTF-8").length);
+
+        char ac = '我';
+        char bc = 'w';
+
+        // 2
+        System.out.println(charToByte(ac).length);
+        // 2
+        System.out.println(charToByte(bc).length);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+}
+
+public static byte[] charToByte(char c) {
+    byte[] b = new byte[2];
+    b[0] = (byte) ((c & 0xFF00) >> 8);
+    b[1] = (byte) (c & 0xFF);
+    return b;
+}
+```
+针对String来说 不同的编码格式存储的不一样，英文和空格是1个字节，中文是3-4个字节（Unicode扩展区的一些汉字存储需要4个字节）。
+而char永远都是2个字节，所以会有 JDK9以后的优化，避免char存储的英文时候的前8位都是0，浪费了空间。
+**同样的代码在JDK11上执行结果是  3 1 2 2**，可以看出来， JDK11中 char 依然是两个字节不变，但字符串英文字符是1个字节了。
