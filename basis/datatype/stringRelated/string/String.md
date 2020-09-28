@@ -119,13 +119,100 @@ System.out.println("s2==s3 ? : " + (s2 == s3));
 ```
 其实是等于的。为什么 不是ab cd 两个对象呢。
 **Final意味着不可变的。与可变有什么优势？**
+1、对象不可变定义 
+不可变对象是指对象的状态在被初始化以后，在整个对象的生命周期内，不可改变。 
+
+2、如何不可变 
+通常情况下，在java中通过以下步骤实现不可变
+1. 对于属性不提供设值方法
+2. 所有的属性定义为private final
+3. 类声明为final不允许继承
+```
+注意：不用final关键字也可以实现对象不可变，使用final只是显示的声明，提示开发者和编译器为不可变。
+```
+
+首先搞懂final, final的出现就是为了不想改变。
+final修饰的类是不能被继承的，所以final修饰类是不能被篡改的。
 不可变就意味着对象值不会被改动。
 1、提高了对象的效率（拷贝时只需要给地址即可）。
-2、提高了安全性（并发时不用担心被其他线程修改了），反射等机制时也不担心所需要的String不安全。
-3、常量池也不用多次变化了。如上代码就是指向了堆中的常量池。
+2、提高了安全性（并发时不用担心被其他线程修改了）。
+3、需要放在常量池，因为不可变所以可以共享。
+**那么String真的不可以改变么？**
+答案是：**不是，可以改**，通过反射。
+答案从源码中找
+```
+private final char[] value;
+```
+final value 意味着String不能指向其他value了。 但是通过反射我们可以获取value的指针，从而修改value数组的结构，以下是代码。
+```
+public static void testReflection() throws Exception {
+    //创建字符串"Hello World"， 并赋给引用s
+    String s = "Hello World";
+    System.out.println("s = " + s); //Hello World
+    //获取String类中的value字段
+    Field valueFieldOfString = String.class.getDeclaredField("value");
+     
+    //改变value属性的访问权限
+    valueFieldOfString.setAccessible(true);
+     
+    //获取s对象上的value属性的值
+    char[] value = (char[]) valueFieldOfString.get(s);
+     
+    //改变value所引用的数组中的第5个字符
+    value[5] = '_';
+     
+    System.out.println("s = " + s);  //Hello_World
+}
+```
 4、**hash效率更高**了，String比如在HashMap中被频繁的调用.hashCode()（扩展:如果Object做HashMap的key则需要重新hashCode和equals方法）。
 
 ### 思考:String 常量池的清理机制?查阅后补充!
+看个代码
+```
+String str1 = “abc”;
+String str2 = “abc”;
+String str3 = “abc”;
+String str4 = new String(“abc”);
+String str5 = new String(“abc”);
+String str6 = new String(“abc”);
+```
+<img src="https://segmentfault.com/img/bVPR6M?w=553&h=322/view">
+对于str1、str2、str3来说 引用直接指向常量池。引用在栈，是同一个引用
+对于str4、str5、str6来说，各自引用不同，除了常量池的对象外，new String("abc") 在堆里也是各自的，再堆里存的是 char数组/jdk9: byte数组。构造器里相当于引用传参。
+
+---
+面试题:
+String str4 = new String(“abc”) 创建多少个对象？
+
+1. 在常量池中查找是否有“abc”对象
++ 有则返回对应的引用实例
++ 没有则创建对应的实例对象
+2. 在堆中 new 一个 String("abc") 对象
+3. 将对象地址赋值给str4,创建一个引用
+
+结论:常量池中没有“abc”字面量则创建两个对象，否则创建一个对象，以及创建一个引用
+
+引申题目:
+**String str1 = new String("A"+"B") ; 会创建多少个对象?**
+**String str2 = new String("ABC") + "ABC" ; 会创建多少个对象?**
+查看JDK8 字节码 得出的答案如下
+str1:
+常量池: "AB" 1个
+堆: char[] 表示的 new String("AB")
+栈: str1引用
+共创建了3个
+
+str2:
+常量池: "ABC" 1个(第一次使用"ABC"时推入常量池)
+堆: Method new StringBuilder(), new String("ABC"), StringBuilder.append(new String("ABC")) 但对象没增多，只是数据变了， 
+StringBuilder.append("ABC") 但对象没增多，只是数据变了， 
+StringBuilder.toString() 新增了一个 "ABCABC"的char[],
+"ABCABC"  未入常量池
+栈: str2引用
+共创建了 常量池1个，堆中 1个StringBuilder, 1个 new String("ABC"), 一个 new String("ABCABC") 由SB.toString()时新增。 引用1个。
 
 ### <span id="stringpool">3、什么是StringPool(StringTable) </span>
 TODO
+
+### 扩展： String.intern() 方法
+简单解释:如果字符串池中没有此值，则放入此值，并返回值地址。
