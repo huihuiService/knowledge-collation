@@ -212,7 +212,56 @@ StringBuilder.toString() 新增了一个 "ABCABC"的char[],
 共创建了 常量池1个，堆中 1个StringBuilder, 1个 new String("ABC"), 一个 new String("ABCABC") 由SB.toString()时新增。 引用1个。
 
 ### <span id="stringpool">3、什么是StringPool(StringTable) </span>
-TODO
+字符串池既字符串常量池，常见的 
+```
+String a = "abc";
+String b = "abc";
+// 输出 true 
+System.out.println(a == b)
+```
+即是常量池的使用。而 new String("abc") 时会在堆里新建一个char 数组表示 "abc" ，同时地址保存在栈内。
+做一个测试记录堆里的 new String("abc") 跟常量池的关系
+```
+public class Test {
+    public static void main(String[] args) {
+        String str = new String("ABC");
+
+    }
+}
+```
+编译: javac Test.java
+查看字节码: javap -c Test
+```
+Compiled from "Test.java"
+public class com.test.Test {
+  public com.test.Test();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: new           #2                  // class java/lang/String
+       3: dup
+       4: ldc           #3                  // String ABC
+       6: invokespecial #4                  // Method java/lang/String."<init>":(Ljava/lang/String;)V
+       9: astore_1
+      10: return
+}
+```
+可以看到 ldc // String ABC 这一行， 此行表示 将"ABC"  字符串推至栈顶，同时如果是成员变量，且已被构造 则会存入值字符串池。
+结论: new String("abc") 时除了堆里的char数组，也会在常量池创建一个 abc 对象。
+
+**字符串池的优缺点**：字符串池的优点就是避免了相同内容的字符串的创建，节省了内存，省去了创建相同字符串的时间，同时提升了性能；另一方面，字符串池的缺点就是牺牲了JVM在常量池中遍历对象所需要的时间，不过其时间成本相比而言比较低。
+
+**字符串池的GC** 字符串池维护了共享的字符串对象，所以不会被垃圾收集器回收。
 
 ### 扩展： String.intern() 方法
 简单解释:如果字符串池中没有此值，则放入此值，并返回值地址。
+```
+String str1 = new String("ABC");
+String str2 = new String("ABC");
+// 输出true
+System.out.println(str1.intern() == str2.intern());
+```
