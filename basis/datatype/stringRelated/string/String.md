@@ -257,6 +257,20 @@ public class com.test.Test {
 
 **字符串池的GC** 字符串池维护了共享的字符串对象，所以不会被垃圾收集器回收。
 
+编译及运行时的问题，看段代码
+```
+String test = "javastr2str3";
+String str1 = "java";
+String str2 = "str2";
+String str3 = "str3";
+
+// 输出true
+System.out.println(test == "java" + "str2" + "str3");
+// 输出false
+System.out.println(test == str1 + str2 + str3);
+```
+为什么会这样? 字符串**字面量**拼接是在JAVA编译器编译期间就执行了，也就是编译时直接把三个字符串拼接后的结果值计算出得到了一个常量，并放入了常量池。而字符串引用（str1,str2,str3）的 + 操作是在运行时才会计算，它会在堆中重新创建一个拼接后的字符串对象。查看字节码编译，其实str1 + str2 是 init了一个StringBuilder,调用.append()拼接完成后调用 StringBuilder.toString() 后才在堆中创建的字符串对象。
+
 ### 扩展： String.intern() 方法
 简单解释:如果字符串池中没有此值，则放入此值，并返回值地址。
 ```
