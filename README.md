@@ -7,7 +7,7 @@
 
 ## JAVA基础
 + [数据类型](#dataType)
-+ 运算
++ [运算](#calculation)
 + 关键字
 + 继承
 + 异常
@@ -26,3 +26,18 @@
 + [StringBuilder](./basis/datatype/stringRelated/stringbuilder/StringBuilder.md)
 + [StringBuffer](./basis/datatype/stringRelated/stringBuffer/StringBuffer.md)
 
+### <span id=”calculation“>运算</span>
+### switch
++ [Switch支持类型](./basis/calculation/Swtich.md)
+
+### <span id=”keyword“>关键字</span>
+#### [final](./basis/keyword/final/Final.md)
+##### 可以声明的位置
++ [类](./basis/datatype/basicdatatype/EightKindsPackageDataType.md)
++ [方法]
++ [数据]
+    - [基本类型]
+    - [引用类型]
+##### final修饰的变量也可以被更改
+
+#### [static]()
